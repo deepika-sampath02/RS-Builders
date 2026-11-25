@@ -1,0 +1,210 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── THEME ───────────────────────────────────────────────────
+   Dark surfaces = --charcoal*  ·  text on dark / cream = --ivory*
+   Add class `on-light` to any section to flip it to a light surface. */
+/* Warm bakery-inspired theme: burgundy, cream and orange-gold. */
+:root {
+  --charcoal: 48 15 14;
+  --charcoal-900: 27 8 8;
+  --charcoal-800: 77 19 17;
+  --charcoal-700: 110 29 22;
+  --charcoal-600: 145 39 22;
+  --brand: 222 58 13;
+  --ink: 62 16 17;
+  --champagne: 255 177 0;
+  --champagne-light: 255 202 82;
+  --champagne-dark: 190 51 24;
+}
+:root {
+  --ivory: 255 248 241;
+  --ivory-50: 255 253 250;
+  --ivory-200: 250 235 220;
+  --ivory-300: 241 217 195;
+  --paper: 255 248 241;
+  --paper-2: 248 236 225;
+  --paper-3: 240 220 204;
+  --paper-4: 230 201 178;
+  --card: 255 252 248;
+}
+.on-light {
+  --charcoal: var(--paper);
+  --charcoal-900: var(--paper-2);
+  --charcoal-800: var(--card);
+  --charcoal-700: var(--paper-3);
+  --charcoal-600: var(--paper-4);
+  --ivory: var(--ink);
+  --ivory-50: var(--ink);
+  --ivory-200: var(--ink);
+  --ivory-300: var(--ink);
+  --champagne: 205 68 26;
+  --champagne-light: 218 77 28;
+  background-color: rgb(var(--paper));
+  color: rgb(var(--ink));
+}
+.on-light .btn-gold { background: rgb(var(--brand)); color: #fff; }
+.on-light .btn-gold:hover { background: rgb(var(--charcoal-800)); box-shadow: 0 10px 30px -10px rgb(var(--brand) / 0.6); }
+.on-light .btn-ghost { border-color: rgb(var(--ink) / 0.3); color: rgb(var(--ink)); }
+.on-light .btn-ghost:hover { border-color: rgb(var(--brand)); color: rgb(var(--brand)); }
+
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+  font-size: 17px;
+}
+
+body {
+  margin: 0;
+  background: rgb(var(--paper));
+  color: rgb(var(--ink));
+  font-family: 'Jost Variable', 'Jost', system-ui, sans-serif;
+  font-weight: 400;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+[class*="text-charcoal/"] {
+  color: rgb(var(--charcoal) / 0.8);
+}
+
+[class*="text-ivory/"] {
+  color: rgb(var(--ivory) / 0.82);
+}
+
+[class*="text-white/"] {
+  color: rgb(255 255 255 / 0.85);
+}
+
+::selection {
+  background: rgb(var(--champagne));
+  color: rgb(var(--charcoal));
+}
+
+@layer components {
+  /* soft gold marker highlight behind a word */
+  .mark {
+    background: linear-gradient(transparent 64%, rgb(var(--champagne) / 0.32) 64%);
+    padding: 0 0.12em;
+    -webkit-box-decoration-break: clone;
+    box-decoration-break: clone;
+  }
+  .chip {
+    @apply inline-flex items-center gap-1.5 rounded-full bg-champagne/15 px-3 py-1 text-[12px] text-charcoal;
+  }
+  .eyebrow {
+    @apply font-sans text-[11px] uppercase tracking-luxe text-champagne;
+  }
+  .display {
+    @apply font-display font-semibold leading-[1.02] tracking-tight;
+  }
+  .btn-gold {
+    @apply inline-flex items-center gap-3 rounded-full bg-champagne px-7 py-3.5 text-[13px] font-medium uppercase tracking-[0.18em] text-charcoal transition duration-500 hover:bg-champagne-light hover:shadow-[0_10px_40px_-10px_rgba(255,145,0,0.4)];
+    background-image: linear-gradient(110deg, #ffad00, #ff6f24);
+    color: #fff;
+  }
+  .btn-whatsapp {
+    @apply inline-flex items-center gap-3 rounded-full bg-[#25D366] px-6 py-3.5 text-[13px] font-semibold text-white transition duration-300 hover:bg-[#1fb95a];
+  }
+  .btn-ghost {
+    @apply inline-flex items-center gap-3 rounded-full border border-ivory/30 px-7 py-3.5 text-[13px] font-medium uppercase tracking-[0.18em] text-ivory transition duration-500 hover:border-champagne hover:text-champagne;
+  }
+  .btn-dark {
+    @apply inline-flex items-center gap-3 rounded-full bg-charcoal px-6 py-3 text-[12px] font-medium uppercase tracking-[0.18em] text-ivory transition duration-500 hover:bg-charcoal-600;
+  }
+  .container-x {
+    @apply mx-auto w-full max-w-[1280px] px-5 sm:px-8 lg:px-12;
+  }
+  .hairline {
+    background: linear-gradient(90deg, transparent, rgb(var(--champagne) / 0.7), transparent);
+    height: 1px;
+  }
+}
+
+/* Film-grain overlay for a cinematic feel */
+.grain::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.09;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+}
+
+/* Swipeable rail (mobile) / grid (desktop) */
+.rail {
+  display: flex;
+  gap: 1rem;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding-bottom: 0.5rem;
+}
+.rail::-webkit-scrollbar {
+  display: none;
+}
+.rail > * {
+  scroll-snap-align: center;
+  flex: 0 0 82%;
+}
+@media (min-width: 768px) {
+  .rail {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    overflow: visible;
+    gap: 1.5rem;
+  }
+  .rail > * {
+    flex: initial;
+  }
+}
+
+/* Range slider */
+input[type='range'].gold {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, rgb(var(--champagne)) var(--p, 50%), rgb(var(--ivory) / 0.2) var(--p, 50%));
+  outline: none;
+}
+input[type='range'].gold::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  height: 22px;
+  width: 22px;
+  border-radius: 999px;
+  background: rgb(var(--champagne));
+  border: 5px solid rgb(var(--charcoal));
+  box-shadow: 0 0 0 1px rgb(var(--champagne)), 0 6px 20px rgb(var(--champagne) / 0.5);
+  cursor: grab;
+}
+input[type='range'].gold::-moz-range-thumb {
+  height: 14px;
+  width: 14px;
+  border-radius: 999px;
+  background: rgb(var(--champagne));
+  border: 4px solid rgb(var(--charcoal));
+  box-shadow: 0 0 0 1px rgb(var(--champagne));
+  cursor: grab;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  .animate-marquee,
+  .animate-glow {
+    animation: none;
+  }
+}
+
+/* Cormorant defaults to old-style figures; use even, lining numerals for prices & stats */
+.font-display,
+.display,
+h1, h2, h3 {
+  font-variant-numeric: lining-nums;
+  font-feature-settings: 'lnum' 1;
+}
