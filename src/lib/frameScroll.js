@@ -80,7 +80,7 @@ function buildFrameNumbers(isSmallScreen) {
  * Starts the animation. Pass in the page elements it should control.
  * Returns a function that stops everything (called when the page is left).
  */
-export function createFrameScroll({ section, sticky, canvas, text, scrim, hint, loader, loaderFill, loaderLabel, progress, progressFill }) {
+export function createFrameScroll({ section, sticky, canvas, text, scrim, hint, loader, loaderFill, loaderLabel, story, progress, progressFill }) {
   const ctx = canvas.getContext('2d')
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
   const isSmallScreen = window.innerWidth < CONFIG.mobileBreakpoint
@@ -119,6 +119,7 @@ export function createFrameScroll({ section, sticky, canvas, text, scrim, hint, 
   setHeight(section, reducedMotion ? '100svh' : CONFIG.heroHeight)
 
   const stageEls = progress ? Array.from(progress.querySelectorAll('[data-stage]')) : []
+  const storyEls = story ? Array.from(story.querySelectorAll('[data-story-stage]')) : []
   if (progress && (!CONFIG.showProgress || reducedMotion)) progress.style.display = 'none'
 
   // ── Scroll → progress ───────────────────────────────────────────────
@@ -220,6 +221,12 @@ export function createFrameScroll({ section, sticky, canvas, text, scrim, hint, 
     // The dark side-gradient only exists to keep the text readable, so it fades with the text
     if (scrim) scrim.style.opacity = String(1 - fade)
     if (hint) hint.style.opacity = String(1 - clamp(current / (CONFIG.textFadeEnd * 0.6)))
+
+    if (story && storyEls.length && !reducedMotion) {
+      story.style.opacity = String(clamp((current - CONFIG.textFadeEnd) / 0.04))
+      const storyStage = Math.min(storyEls.length - 1, Math.floor(clamp((current - CONFIG.textFadeEnd) / (1 - CONFIG.textFadeEnd)) * storyEls.length))
+      storyEls.forEach((el, i) => el.setAttribute('data-active', String(i === storyStage)))
+    }
 
     if (progress && CONFIG.showProgress && !reducedMotion) {
       progress.style.opacity = String(clamp(current / 0.06))

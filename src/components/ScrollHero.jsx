@@ -91,7 +91,7 @@ export default function ScrollHero({ eyebrow, lines, sub, children, lastLineClas
                 className="absolute inset-0 flex items-center opacity-0 transition-opacity duration-500 data-[active=true]:opacity-100"
               >
                 <div className={`container-x flex h-full items-end pb-20 ${index % 2 === 0 ? 'justify-end' : 'justify-start'}`}>
-                  <article className="w-full max-w-xs rounded-xl border-2 border-champagne-dark bg-ivory/55 p-5 text-charcoal shadow-[0_20px_50px_-30px_rgba(0,0,0,0.5)] backdrop-blur-[3px]">
+                  <article className="w-full max-w-xs rounded-xl border-2 border-champagne-dark bg-slate-100/55 p-5 text-charcoal shadow-[0_20px_50px_-30px_rgba(0,0,0,0.5)] backdrop-blur-[3px]">
                     <p className="eyebrow mb-2 inline-flex w-fit items-center rounded-full border border-champagne-dark/50 bg-champagne/20 px-2.5 py-1 text-xs font-bold !text-[#481012]">Step {stage.n} · {stage.title}</p>
                     <h2 className="display text-[1.65rem] text-charcoal">{stage.title}</h2>
                     <p className="mt-2 text-[15px] leading-relaxed text-charcoal">{stage.text}</p>
