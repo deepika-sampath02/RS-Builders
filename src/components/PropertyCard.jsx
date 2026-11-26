@@ -32,7 +32,7 @@ export default function PropertyCard({ cat, index = 0 }) {
           </span>
         </div>
 
-        <div className="flex flex-1 flex-col p-6 sm:p-7">
+        <div className="flex flex-1 flex-col p-5 sm:p-7">
           <div>
             <h3 className="display text-3xl font-semibold text-ink sm:text-4xl">{cat.cardTitle}</h3>
             <p className="mt-3 min-h-[52px] text-[16px] font-medium leading-relaxed text-ink/70">{cat.cardLine}</p>
@@ -48,12 +48,12 @@ export default function PropertyCard({ cat, index = 0 }) {
             </ul>
           </div>
 
-          <div className="mt-auto grid grid-cols-2 gap-3 pt-7">
-            <div className="flex min-h-[84px] flex-col items-center justify-center rounded-lg border border-ink/15 bg-[#fff3e8] px-3 py-3 text-center">
+          <div className="mt-auto grid grid-cols-1 gap-3 pt-7 sm:grid-cols-2">
+            <div className="flex min-h-[68px] min-w-0 flex-col items-center justify-center rounded-lg border border-ink/15 bg-[#fff3e8] px-3 py-3 text-center sm:min-h-[84px]">
               <p className="text-[9px] font-medium uppercase tracking-[0.16em] text-ink/55 sm:text-[10px]">Starting from</p>
               <p className="mt-1 font-display text-[16px] font-semibold leading-[1.08] text-ink sm:text-[17px]">{cat.price}</p>
             </div>
-            <span className="flex min-h-[84px] items-center justify-center gap-2 whitespace-nowrap rounded-lg border border-brand bg-brand px-3 py-3 text-center text-[11px] font-bold uppercase leading-tight tracking-[0.08em] text-white shadow-[0_8px_18px_-12px_rgba(222,58,13,0.8)] transition-[background-color,border-color,box-shadow,transform] duration-300 group-hover:border-champagne-light group-hover:bg-[#f59a18] group-hover:text-charcoal group-hover:shadow-[0_12px_26px_-10px_rgba(255,177,0,0.75)] group-active:scale-[0.97] group-active:border-[#be3318] group-active:bg-[#be3318] group-active:text-white sm:text-[12px]">
+            <span className="flex min-h-[56px] min-w-0 items-center justify-center gap-2 rounded-lg border border-brand bg-brand px-3 py-3 text-center text-[11px] font-bold uppercase leading-tight tracking-[0.08em] text-white shadow-[0_8px_18px_-12px_rgba(222,58,13,0.8)] transition-[background-color,border-color,box-shadow,transform] duration-300 group-hover:border-champagne-light group-hover:bg-[#f59a18] group-hover:text-charcoal group-hover:shadow-[0_12px_26px_-10px_rgba(255,177,0,0.75)] group-active:scale-[0.97] group-active:border-[#be3318] group-active:bg-[#be3318] group-active:text-white sm:min-h-[84px] sm:text-[12px]">
               Explore Home <Arrow className="h-4 w-4 shrink-0 transition-transform duration-300 group-hover:translate-x-2 group-active:translate-x-1" />
             </span>
           </div>
