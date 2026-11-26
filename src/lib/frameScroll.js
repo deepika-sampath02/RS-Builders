@@ -28,8 +28,9 @@ export const CONFIG = {
   maxPixelRatio: 2,           // cap for sharp (retina) screens
 
   mobileBreakpoint: 820,      // screens narrower than this (px) are treated as "small"
-  mobileStep: 3,              // small screens load every 3rd frame (saves data + memory)
-  mobileMaxPixelRatio: 1.5,   // phones draw a little softer, but use far less memory
+  mobileStep: 2,              // small screens load every 2nd frame (1 = all frames = smoothest, 3 = lightest)
+  mobileMaxPixelRatio: 1.25,  // phones draw a little softer, but scroll much smoother + use less memory
+  mobileSmoothing: 0.16,      // phones: how fast the animation follows your finger (higher = snappier)
   mobileFit: 0.6,             // phones: 0 = fill the screen (crops the sides, zoomed in)
                               //         1 = show the WHOLE picture (smaller, blurred bars above/below)
                               //         0.6 = a good middle. Try 0.4 – 0.8 to taste.
@@ -82,6 +83,7 @@ function buildFrameNumbers(isSmallScreen) {
  */
 export function createFrameScroll({ section, sticky, canvas, text, scrim, hint, loader, loaderFill, loaderLabel, story, progress, progressFill }) {
   const ctx = canvas.getContext('2d')
+  canvas.style.transform = 'translateZ(0)' // own GPU layer = smoother on phones
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
   const isSmallScreen = window.innerWidth < CONFIG.mobileBreakpoint
   // On phones every picture is shrunk + cropped to the screen the moment it arrives, and the
@@ -248,7 +250,7 @@ export function createFrameScroll({ section, sticky, canvas, text, scrim, hint, 
       render()
       return
     }
-    current += gap * CONFIG.smoothing // move 9% of the remaining distance
+    current += gap * (lowMemory ? CONFIG.mobileSmoothing : CONFIG.smoothing) // move a % of the remaining distance
     render()
     rafId = requestAnimationFrame(tick) // not there yet → ask for another frame
   }
