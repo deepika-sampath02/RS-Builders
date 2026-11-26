@@ -28,12 +28,21 @@ export const CONFIG = {
   maxPixelRatio: 2,           // cap for sharp (retina) screens
 
   mobileBreakpoint: 820,      // screens narrower than this (px) are treated as "small"
-  mobileStep: 2,              // small screens load every 2nd frame (saves data)
+  mobileStep: 3,              // small screens load every 3rd frame (saves data + memory)
+  mobileMaxPixelRatio: 1.5,   // phones draw a little softer, but use far less memory
+  mobileFit: 0.6,             // phones: 0 = fill the screen (crops the sides, zoomed in)
+                              //         1 = show the WHOLE picture (smaller, blurred bars above/below)
+                              //         0.6 = a good middle. Try 0.4 – 0.8 to taste.
+  mobileFocusX: 0.5,          // phones: which part of the picture stays in view when sides are cut
+                              //         0 = left edge, 0.5 = centre, 1 = right edge
+  mobileFocusY: 0.45,         // phones: vertical position of the picture when bars are shown
 
   textFadeEnd: 0.10,          // hero text is fully faded after the first 10% of scroll
   reducedMotionFrame: 'last', // picture shown if the visitor turned off animations
                               //   ('last', or a frame number like 60)
 
+  showProgress: true,         // thin progress bar with stage labels
+  stages: ['Consult', 'Design', 'Build', 'Finish', 'Handover'], // split evenly along the bar
 }
 // ───────────────────────────────────────────────────────────────────────
 
@@ -71,10 +80,16 @@ function buildFrameNumbers(isSmallScreen) {
  * Starts the animation. Pass in the page elements it should control.
  * Returns a function that stops everything (called when the page is left).
  */
-export function createFrameScroll({ section, sticky, canvas, text, scrim, hint, loader, loaderFill, loaderLabel, story }) {
+export function createFrameScroll({ section, sticky, canvas, text, scrim, hint, loader, loaderFill, loaderLabel, progress, progressFill }) {
   const ctx = canvas.getContext('2d')
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
   const isSmallScreen = window.innerWidth < CONFIG.mobileBreakpoint
+  // On phones every picture is shrunk + cropped to the screen the moment it arrives, and the
+  // big original is thrown away. Without this a phone holds ~60 full-size photos in memory
+  // and the browser silently gives up (blank / frozen hero).
+  const lowMemory = isSmallScreen
+  let generation = 0 // bumped when we must reload the pictures (phone rotated)
+  let layoutKey = ''
 
   // ── Which pictures do we need? ──────────────────────────────────────
   let nums = buildFrameNumbers(isSmallScreen)
@@ -103,8 +118,8 @@ export function createFrameScroll({ section, sticky, canvas, text, scrim, hint, 
   setHeight(sticky, '100svh')
   setHeight(section, reducedMotion ? '100svh' : CONFIG.heroHeight)
 
-  const storyEls = story ? Array.from(story.querySelectorAll('[data-story-stage]')) : []
-  if (story && reducedMotion) story.style.display = 'none'
+  const stageEls = progress ? Array.from(progress.querySelectorAll('[data-stage]')) : []
+  if (progress && (!CONFIG.showProgress || reducedMotion)) progress.style.display = 'none'
 
   // ── Scroll → progress ───────────────────────────────────────────────
   /** How far through the hero are we? 0 = top of hero, 1 = end of hero. */
@@ -127,10 +142,45 @@ export function createFrameScroll({ section, sticky, canvas, text, scrim, hint, 
 
   /** Draws one picture so it FILLS the screen without stretching ("cover"), centred. */
   function drawCover(img) {
+    if (img.prepared) { // already cropped to the screen (phones)
+      ctx.drawImage(img, 0, 0, cssW, cssH)
+      return
+    }
     const scale = Math.max(cssW / img.naturalWidth, cssH / img.naturalHeight)
     const w = img.naturalWidth * scale
     const h = img.naturalHeight * scale
     ctx.drawImage(img, (cssW - w) / 2, (cssH - h) / 2, w, h)
+  }
+
+  /** Phones only: shrink + crop a picture to exactly what the screen shows ("cover"). */
+  function prepare(img) {
+    const dpr = Math.min(window.devicePixelRatio || 1, CONFIG.mobileMaxPixelRatio)
+    const pw = Math.max(1, Math.round(cssW * dpr))
+    const ph = Math.max(1, Math.round(cssH * dpr))
+    const cover = Math.max(pw / img.naturalWidth, ph / img.naturalHeight) // fills the screen
+    const whole = Math.min(pw / img.naturalWidth, ph / img.naturalHeight) // whole picture visible
+    const scale = cover + (whole - cover) * clamp(CONFIG.mobileFit) // somewhere in between
+    const w = img.naturalWidth * scale
+    const h = img.naturalHeight * scale
+    const c = document.createElement('canvas')
+    c.width = pw
+    c.height = ph
+    const g = c.getContext('2d')
+    if (scale < cover - 0.001) {
+      // The picture is smaller than the screen → fill the leftover space with a soft blurred
+      // copy of itself (shrink to a tiny image, then stretch it back = cheap blur on every phone).
+      const tiny = document.createElement('canvas')
+      tiny.width = 24
+      tiny.height = Math.max(1, Math.round((24 * ph) / pw))
+      const t = tiny.getContext('2d')
+      const cs = Math.max(tiny.width / img.naturalWidth, tiny.height / img.naturalHeight)
+      t.drawImage(img, (tiny.width - img.naturalWidth * cs) / 2, (tiny.height - img.naturalHeight * cs) / 2, img.naturalWidth * cs, img.naturalHeight * cs)
+      g.imageSmoothingQuality = 'high'
+      g.drawImage(tiny, 0, 0, pw, ph)
+    }
+    g.drawImage(img, (pw - w) * clamp(CONFIG.mobileFocusX), (ph - h) * clamp(CONFIG.mobileFocusY), w, h)
+    c.prepared = true
+    return c
   }
 
   /** Paints the canvas for the current progress (blends two neighbouring frames). */
@@ -171,17 +221,15 @@ export function createFrameScroll({ section, sticky, canvas, text, scrim, hint, 
     if (scrim) scrim.style.opacity = String(1 - fade)
     if (hint) hint.style.opacity = String(1 - clamp(current / (CONFIG.textFadeEnd * 0.6)))
 
-    if (storyEls.length > 0) {
-      const stage = Math.min(storyEls.length - 1, Math.floor(current * storyEls.length))
+    if (progress && CONFIG.showProgress && !reducedMotion) {
+      progress.style.opacity = String(clamp(current / 0.06))
+      progressFill.style.transform = `scaleX(${current})`
+      const stage = Math.min(CONFIG.stages.length - 1, Math.floor(current * CONFIG.stages.length))
       if (stage !== lastStage) {
         lastStage = stage
-        storyEls.forEach((el, i) => {
-          el.setAttribute('data-active', String(i === stage))
-          el.setAttribute('aria-hidden', String(i !== stage))
-        })
+        stageEls.forEach((el, i) => el.setAttribute('data-active', String(i === stage)))
       }
     }
-    if (story) story.style.opacity = String(clamp(current / CONFIG.textFadeEnd))
   }
 
   // ── The smoothing loop (only runs while catching up) ────────────────
@@ -220,13 +268,23 @@ export function createFrameScroll({ section, sticky, canvas, text, scrim, hint, 
     if (w === cssW && h === cssH) return
     cssW = w
     cssH = h
-    const dpr = Math.min(window.devicePixelRatio || 1, CONFIG.maxPixelRatio)
+    const dpr = Math.min(window.devicePixelRatio || 1, lowMemory ? CONFIG.mobileMaxPixelRatio : CONFIG.maxPixelRatio)
     canvas.width = Math.round(cssW * dpr)
     canvas.height = Math.round(cssH * dpr)
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0) // from now on we draw in normal CSS pixels
     target = readScrollProgress()
     if (reducedMotion) current = target
     render()
+    // Phone rotated (new shape)? The cropped pictures no longer fit → fetch them again
+    // (they come from the browser cache, so it is fast).
+    const key = `${cssW}x${cssH}`
+    if (lowMemory && layoutKey && key !== layoutKey && !destroyed) {
+      layoutKey = key
+      generation++
+      loadedCount = 0
+      preload(generation)
+    }
+    layoutKey = key
   }
 
   // ── Loading ─────────────────────────────────────────────────────────
@@ -234,7 +292,7 @@ export function createFrameScroll({ section, sticky, canvas, text, scrim, hint, 
   function loadFrame(index) {
     return new Promise((resolve) => {
       const url = urls[index]
-      const cached = imageCache.get(url)
+      const cached = lowMemory ? null : imageCache.get(url)
       if (cached) {
         frames[index] = cached
         return resolve(true)
@@ -242,8 +300,12 @@ export function createFrameScroll({ section, sticky, canvas, text, scrim, hint, 
       const img = new Image()
       img.decoding = 'async'
       img.onload = () => {
-        imageCache.set(url, img)
-        frames[index] = img
+        if (lowMemory) {
+          frames[index] = prepare(img) // keep only the small cropped copy
+        } else {
+          imageCache.set(url, img)
+          frames[index] = img
+        }
         resolve(true)
       }
       img.onerror = () => {
@@ -268,17 +330,19 @@ export function createFrameScroll({ section, sticky, canvas, text, scrim, hint, 
   }
 
   /** Frame 1 first (shown at once), then everything else, 6 at a time, in order. */
-  async function preload() {
+  async function preload(gen = generation) {
     anyFrameLoaded = await loadFrame(0)
+    if (gen !== generation || destroyed) return
     loadedCount++
     render() // show frame 1 immediately
     updateLoader()
 
     let next = 1
     const worker = async () => {
-      while (!destroyed && next < total) {
+      while (!destroyed && gen === generation && next < total) {
         const index = next++
         const ok = await loadFrame(index)
+        if (gen !== generation) return
         loadedCount++
         if (ok) anyFrameLoaded = true
         if (!rafId) render() // pick up newly arrived pictures while the loop is asleep
@@ -286,13 +350,14 @@ export function createFrameScroll({ section, sticky, canvas, text, scrim, hint, 
       }
     }
     await Promise.all(Array.from({ length: Math.min(CONFIG.concurrency, total) }, worker))
-    if (destroyed) return
+    if (destroyed || gen !== generation) return
 
     if (!anyFrameLoaded) {
       // Nothing loaded at all (wrong folder or file names?). Don't leave a long empty scroll.
       console.warn(`[frame-scroll] No frames found at ${BASE}${CONFIG.folder}. Check CONFIG (folder, prefix, extension, digits).`)
       setHeight(section, '100svh')
       canvas.style.display = 'none'
+      if (progress) progress.style.display = 'none'
       if (loader) loader.style.display = 'none'
       target = current = 0
       updateOverlay()

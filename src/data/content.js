@@ -19,7 +19,6 @@ export const NAV = [
   { label: '2BHK Homes', to: '/2bhk-homes' },
   { label: '3BHK Homes', to: '/3bhk-homes' },
   { label: 'Duplex Villas', to: '/duplex-villas' },
-  { label: 'Our Projects', to: '/our-projects' },
 ]
 
 // ── helpers ──────────────────────────────────────────────────
